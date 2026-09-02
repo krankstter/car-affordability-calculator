@@ -1,9 +1,14 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
+import { Clipboard } from '@capacitor/clipboard';
 import { CalculatorService } from '../../services/calculator.service';
 import { GeminiService, ChatTurn, GeminiError } from '../../services/gemini.service';
 import { fmtINR, fmtPct } from '../../shared/format';
 
 type Tab = 'explain' | 'fill' | 'chat';
+
+const GEMINI_KEY_URL = 'https://aistudio.google.com/apikey';
 
 function stripFences(s: string): string {
   const trimmed = s.trim();
@@ -19,13 +24,16 @@ function stripFences(s: string): string {
   styleUrl: './ai-assistant.css',
   templateUrl: './ai-assistant.html',
 })
-export class AiAssistant {
+export class AiAssistant implements OnDestroy {
   protected readonly calc = inject(CalculatorService);
   private readonly gemini = inject(GeminiService);
 
   protected readonly hasKey = this.gemini.hasKey;
   protected readonly keyInput = signal('');
   protected readonly showKeyField = signal(false);
+  protected readonly keyPagePending = signal(false);
+  protected readonly clipboardNote = signal('');
+  private browserFinishedListener: { remove: () => void } | null = null;
 
   protected readonly activeTab = signal<Tab>('explain');
 
@@ -45,6 +53,65 @@ export class AiAssistant {
 
   setTab(tab: Tab): void {
     this.activeTab.set(tab);
+  }
+
+  async openKeyPage(): Promise<void> {
+    if (this.keyPagePending()) return;
+    this.keyPagePending.set(true);
+    this.clipboardNote.set('');
+
+    if (Capacitor.isNativePlatform()) {
+      this.browserFinishedListener?.remove();
+      this.browserFinishedListener = await Browser.addListener('browserFinished', () => {
+        this.browserFinishedListener?.remove();
+        this.browserFinishedListener = null;
+        this.keyPagePending.set(false);
+        void this.pasteFromClipboard(true);
+      });
+      await Browser.open({ url: GEMINI_KEY_URL, presentationStyle: 'popover' });
+      return;
+    }
+
+    // Web/PWA: a small centered popup, like a typical OAuth sign-in window —
+    // address bar visible (so the user can verify the real domain), toolbar/menubar hidden.
+    const width = 480;
+    const height = 760;
+    const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+    const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+    const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=yes,noopener,noreferrer`;
+    const popup = window.open(GEMINI_KEY_URL, 'geminiApiKey', features);
+
+    if (!popup) {
+      // Popup blocked — fall back to a normal tab rather than silently failing.
+      window.open(GEMINI_KEY_URL, '_blank', 'noopener,noreferrer');
+      this.keyPagePending.set(false);
+      return;
+    }
+
+    const poll = window.setInterval(() => {
+      if (popup.closed) {
+        window.clearInterval(poll);
+        this.keyPagePending.set(false);
+        void this.pasteFromClipboard(true);
+      }
+    }, 500);
+  }
+
+  async pasteFromClipboard(silent = false): Promise<void> {
+    try {
+      const { value } = await Clipboard.read();
+      const trimmed = value?.trim() ?? '';
+      if (trimmed && trimmed.length < 400 && !/\s/.test(trimmed)) {
+        this.keyInput.set(trimmed);
+        this.clipboardNote.set('Pasted from clipboard — check it looks right, then save.');
+      } else if (!silent) {
+        this.clipboardNote.set("Clipboard doesn't look like an API key — paste it manually.");
+      }
+    } catch {
+      if (!silent) {
+        this.clipboardNote.set('Clipboard access was denied — paste the key manually instead.');
+      }
+    }
   }
 
   saveKey(): void {
@@ -163,5 +230,9 @@ export class AiAssistant {
     } finally {
       this.chatPending.set(false);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.browserFinishedListener?.remove();
   }
 }

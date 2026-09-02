@@ -9,18 +9,19 @@
         Add a free Gemini API key to unlock an AI explanation of your result, natural-language quick-fill, and a chat advisor.
         No card required. The key is stored only on this device.
       </p>
-      <a
+      <button
+        type="button"
         class="suggest-btn"
-        style="padding:8px 16px; min-height:34px; margin-top:10px; text-decoration:none"
-        href="https://aistudio.google.com/apikey"
-        target="_blank"
-        rel="noopener noreferrer"
+        style="padding:8px 16px; min-height:34px; margin-top:10px"
+        [disabled]="keyPagePending()"
+        (click)="openKeyPage()"
       >
-        Get a free API key
+        {{ keyPagePending() ? 'Opening…' : 'Get a free API key' }}
         <svg viewBox="0 0 24 24" fill="none" style="width:13px; height:13px; margin-left:5px" aria-hidden="true">
           <path d="M7 17 17 7M9 7h8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </a>
+      </button>
+      <p class="field-caption" style="margin-top:6px">Opens a small sign-in-style window. Copy your key there, close it, and it'll try to paste itself in below.</p>
       <div class="field" style="margin-top:10px">
         <div class="input-shell">
           <input
@@ -32,7 +33,13 @@
           />
         </div>
       </div>
-      <button type="button" class="suggest-btn" style="padding:8px 16px; min-height:34px" (click)="saveKey()">Save key</button>
+      @if (clipboardNote()) {
+        <p class="field-caption" style="margin-top:6px">{{ clipboardNote() }}</p>
+      }
+      <div class="chart-header" style="margin-top:10px; gap:8px">
+        <button type="button" class="suggest-btn" style="padding:8px 16px; min-height:34px" (click)="saveKey()">Save key</button>
+        <button type="button" class="table-toggle-btn" (click)="pasteFromClipboard()">Paste from clipboard</button>
+      </div>
     </div>
   } @else {
     <div class="ai-tabs">
