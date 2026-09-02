@@ -10,9 +10,17 @@ export interface ChatTurn {
 }
 
 export class GeminiError extends Error {
-  constructor(message: string, readonly kind: 'no-key' | 'invalid-key' | 'rate-limit' | 'blocked' | 'network' | 'unknown') {
+  constructor(message: string, readonly kind: 'no-key' | 'invalid-key' | 'rate-limit' | 'unavailable' | 'blocked' | 'network' | 'unknown') {
     super(message);
   }
+}
+
+const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
+const MAX_ATTEMPTS = 3;
+const RETRY_DELAYS_MS = [600, 1800];
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 @Injectable({ providedIn: 'root' })
@@ -61,28 +69,38 @@ export class GeminiService {
       body['generationConfig'] = { responseMimeType: 'application/json' };
     }
 
-    let res: Response;
-    try {
-      res = await fetch(ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
-        body: JSON.stringify(body),
-      });
-    } catch {
-      throw new GeminiError('Could not reach Gemini — check your internet connection.', 'network');
+    let res: Response | undefined;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        res = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
+          body: JSON.stringify(body),
+        });
+      } catch {
+        throw new GeminiError('Could not reach Gemini — check your internet connection.', 'network');
+      }
+      if (res.ok || !RETRYABLE_STATUSES.has(res.status) || attempt === MAX_ATTEMPTS) break;
+      await sleep(RETRY_DELAYS_MS[attempt - 1] ?? 1800);
     }
 
-    if (!res.ok) {
-      if (res.status === 400 || res.status === 401 || res.status === 403) {
+    if (!res!.ok) {
+      if (res!.status === 401 || res!.status === 403) {
         throw new GeminiError('Gemini rejected the API key. Double-check it was copied correctly.', 'invalid-key');
       }
-      if (res.status === 429) {
+      if (res!.status === 429) {
         throw new GeminiError('Gemini rate limit hit — wait a moment and try again.', 'rate-limit');
       }
-      throw new GeminiError(`Gemini request failed (HTTP ${res.status}).`, 'unknown');
+      if (res!.status === 503 || res!.status === 500 || res!.status === 502 || res!.status === 504) {
+        throw new GeminiError("Gemini's servers are temporarily overloaded. Already retried a couple of times — wait a moment and try again.", 'unavailable');
+      }
+      if (res!.status === 400) {
+        throw new GeminiError('Gemini rejected the request — the API key may be malformed.', 'invalid-key');
+      }
+      throw new GeminiError(`Gemini request failed (HTTP ${res!.status}).`, 'unknown');
     }
 
-    const data = await res.json();
+    const data = await res!.json();
     const blockReason = data?.promptFeedback?.blockReason;
     if (blockReason) {
       throw new GeminiError(`Gemini declined to respond (${blockReason}).`, 'blocked');
