@@ -562,6 +562,12 @@ footer.disclaimer { margin-top: 26px; padding: 16px 22px; font-size: 0.72rem; li
   font-size: 0.7rem; color: var(--ink-muted); text-decoration: underline; text-underline-offset: 2px;
 }
 .ai-forget-key:hover { color: var(--status-critical); }
+.ai-backup { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--glass-border); }
+.ai-backup-status {
+  display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+  font-size: 0.72rem; color: var(--ink-muted); margin: 0;
+}
+.ai-backup-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--status-good); flex: none; }
 
 .chat-thread { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; max-height: 320px; overflow-y: auto; }
 .chat-bubble {

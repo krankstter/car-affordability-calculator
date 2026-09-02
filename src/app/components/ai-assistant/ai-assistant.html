@@ -119,6 +119,49 @@
       </div>
     }
 
+    <div class="ai-backup">
+      @if (hasGroqKey()) {
+        <p class="ai-backup-status">
+          <span class="ai-backup-dot" aria-hidden="true"></span>
+          Groq backup key active — used automatically if Gemini is overloaded.
+          <button type="button" class="ai-forget-key" style="display:inline; margin-top:0" (click)="forgetGroqKey()">Remove</button>
+        </p>
+      } @else if (showGroqSetup()) {
+        <p class="field-caption">
+          Optional: add a free Groq key too. If Gemini's servers are overloaded, this app will automatically retry through Groq instead of just failing.
+        </p>
+        <button
+          type="button"
+          class="suggest-btn"
+          style="padding:6px 14px; min-height:30px; margin-top:8px"
+          [disabled]="groqKeyPagePending()"
+          (click)="openGroqKeyPage()"
+        >
+          {{ groqKeyPagePending() ? 'Opening…' : 'Get a free Groq key' }}
+        </button>
+        <div class="field" style="margin-top:8px">
+          <div class="input-shell">
+            <input
+              type="password"
+              placeholder="Paste your Groq API key"
+              [value]="groqKeyInput()"
+              (input)="groqKeyInput.set($any($event.target).value)"
+              (keydown.enter)="saveGroqKey()"
+            />
+          </div>
+        </div>
+        @if (groqClipboardNote()) {
+          <p class="field-caption" style="margin-top:6px">{{ groqClipboardNote() }}</p>
+        }
+        <div class="chart-header" style="margin-top:8px; gap:8px">
+          <button type="button" class="suggest-btn" style="padding:6px 14px; min-height:30px" (click)="saveGroqKey()">Save backup key</button>
+          <button type="button" class="table-toggle-btn" (click)="pasteFromClipboard(groqKeyInput, groqClipboardNote)">Paste from clipboard</button>
+        </div>
+      } @else {
+        <button type="button" class="ai-forget-key" (click)="showGroqSetup.set(true)">+ Add a free backup key (optional)</button>
+      }
+    </div>
+
     <button type="button" class="ai-forget-key" (click)="forgetKey()">Remove saved API key</button>
   }
 </div>

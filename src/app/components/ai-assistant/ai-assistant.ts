@@ -1,14 +1,17 @@
-import { Component, OnDestroy, inject, signal } from '@angular/core';
+import { Component, OnDestroy, WritableSignal, inject, signal } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { Browser } from '@capacitor/browser';
 import { Clipboard } from '@capacitor/clipboard';
 import { CalculatorService } from '../../services/calculator.service';
-import { GeminiService, ChatTurn, GeminiError } from '../../services/gemini.service';
+import { GeminiService } from '../../services/gemini.service';
+import { GroqService } from '../../services/groq.service';
+import { AiProviderError, ChatTurn } from '../../services/ai-http.util';
 import { fmtINR, fmtPct } from '../../shared/format';
 
 type Tab = 'explain' | 'fill' | 'chat';
 
 const GEMINI_KEY_URL = 'https://aistudio.google.com/apikey';
+const GROQ_KEY_URL = 'https://console.groq.com/keys';
 
 function stripFences(s: string): string {
   const trimmed = s.trim();
@@ -27,14 +30,23 @@ function stripFences(s: string): string {
 export class AiAssistant implements OnDestroy {
   protected readonly calc = inject(CalculatorService);
   private readonly gemini = inject(GeminiService);
+  private readonly groq = inject(GroqService);
 
   protected readonly hasKey = this.gemini.hasKey;
+  protected readonly hasGroqKey = this.groq.hasKey;
   protected readonly keyInput = signal('');
   protected readonly showKeyField = signal(false);
   protected readonly keyPagePending = signal(false);
   protected readonly clipboardNote = signal('');
+
+  protected readonly showGroqSetup = signal(false);
+  protected readonly groqKeyInput = signal('');
+  protected readonly groqKeyPagePending = signal(false);
+  protected readonly groqClipboardNote = signal('');
+
   private browserFinishedListener: { remove: () => void } | null = null;
   private popupPollTimer: number | null = null;
+  private groqPopupPollTimer: number | null = null;
 
   protected readonly activeTab = signal<Tab>('explain');
 
@@ -57,19 +69,34 @@ export class AiAssistant implements OnDestroy {
   }
 
   async openKeyPage(): Promise<void> {
-    if (this.keyPagePending()) return;
-    this.keyPagePending.set(true);
-    this.clipboardNote.set('');
+    await this.openProviderKeyPage(GEMINI_KEY_URL, this.keyInput, this.keyPagePending, this.clipboardNote, 'gemini', (t) => (this.popupPollTimer = t));
+  }
+
+  async openGroqKeyPage(): Promise<void> {
+    await this.openProviderKeyPage(GROQ_KEY_URL, this.groqKeyInput, this.groqKeyPagePending, this.groqClipboardNote, 'groq', (t) => (this.groqPopupPollTimer = t));
+  }
+
+  private async openProviderKeyPage(
+    url: string,
+    targetInput: WritableSignal<string>,
+    pending: WritableSignal<boolean>,
+    note: WritableSignal<string>,
+    which: 'gemini' | 'groq',
+    setTimer: (t: number | null) => void
+  ): Promise<void> {
+    if (pending()) return;
+    pending.set(true);
+    note.set('');
 
     if (Capacitor.isNativePlatform()) {
       this.browserFinishedListener?.remove();
       this.browserFinishedListener = await Browser.addListener('browserFinished', () => {
         this.browserFinishedListener?.remove();
         this.browserFinishedListener = null;
-        this.keyPagePending.set(false);
-        void this.pasteFromClipboard(true);
+        pending.set(false);
+        void this.pasteFromClipboard(targetInput, note, true);
       });
-      await Browser.open({ url: GEMINI_KEY_URL, presentationStyle: 'popover' });
+      await Browser.open({ url, presentationStyle: 'popover' });
       return;
     }
 
@@ -80,39 +107,39 @@ export class AiAssistant implements OnDestroy {
     const left = Math.max(0, Math.round((window.screen.width - width) / 2));
     const top = Math.max(0, Math.round((window.screen.height - height) / 2));
     const features = `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=yes,noopener,noreferrer`;
-    const popup = window.open(GEMINI_KEY_URL, 'geminiApiKey', features);
+    const popup = window.open(url, `${which}ApiKey`, features);
 
     if (!popup) {
       // Popup blocked — fall back to a normal tab rather than silently failing.
-      window.open(GEMINI_KEY_URL, '_blank', 'noopener,noreferrer');
-      this.keyPagePending.set(false);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      pending.set(false);
       return;
     }
 
-    if (this.popupPollTimer) window.clearInterval(this.popupPollTimer);
-    this.popupPollTimer = window.setInterval(() => {
+    const timer = window.setInterval(() => {
       if (popup.closed) {
-        window.clearInterval(this.popupPollTimer!);
-        this.popupPollTimer = null;
-        this.keyPagePending.set(false);
-        void this.pasteFromClipboard(true);
+        window.clearInterval(timer);
+        setTimer(null);
+        pending.set(false);
+        void this.pasteFromClipboard(targetInput, note, true);
       }
     }, 500);
+    setTimer(timer);
   }
 
-  async pasteFromClipboard(silent = false): Promise<void> {
+  async pasteFromClipboard(targetInput: WritableSignal<string> = this.keyInput, note: WritableSignal<string> = this.clipboardNote, silent = false): Promise<void> {
     try {
       const { value } = await Clipboard.read();
       const trimmed = value?.trim() ?? '';
       if (trimmed && trimmed.length < 400 && !/\s/.test(trimmed)) {
-        this.keyInput.set(trimmed);
-        this.clipboardNote.set('Pasted from clipboard — check it looks right, then save.');
+        targetInput.set(trimmed);
+        note.set('Pasted from clipboard — check it looks right, then save.');
       } else if (!silent) {
-        this.clipboardNote.set("Clipboard doesn't look like an API key — paste it manually.");
+        note.set("Clipboard doesn't look like an API key — paste it manually.");
       }
     } catch {
       if (!silent) {
-        this.clipboardNote.set('Clipboard access was denied — paste the key manually instead.');
+        note.set('Clipboard access was denied — paste the key manually instead.');
       }
     }
   }
@@ -130,6 +157,17 @@ export class AiAssistant implements OnDestroy {
     this.chatMessages.set([]);
   }
 
+  saveGroqKey(): void {
+    if (!this.groqKeyInput().trim()) return;
+    this.groq.setApiKey(this.groqKeyInput());
+    this.groqKeyInput.set('');
+    this.groqClipboardNote.set('');
+  }
+
+  forgetGroqKey(): void {
+    this.groq.clearApiKey();
+  }
+
   private buildContext(): string {
     const c = this.calc;
     return [
@@ -143,6 +181,25 @@ export class AiAssistant implements OnDestroy {
     ].join('\n');
   }
 
+  /** Tries Gemini first; if it fails (for any reason other than "no key set") and a Groq
+   *  key is configured, silently retries via Groq before surfacing the original error. */
+  private async callWithFallback(
+    geminiCall: () => Promise<string>,
+    groqCall: () => Promise<string>
+  ): Promise<string> {
+    try {
+      return await geminiCall();
+    } catch (e) {
+      const canFallback = this.groq.hasKey() && e instanceof AiProviderError && e.kind !== 'no-key';
+      if (!canFallback) throw e;
+      try {
+        return await groqCall();
+      } catch {
+        throw e; // report the original (Gemini) failure — it's the primary provider
+      }
+    }
+  }
+
   async explain(): Promise<void> {
     if (!this.gemini.hasKey() || this.explainPending()) return;
     this.explainPending.set(true);
@@ -152,10 +209,14 @@ export class AiAssistant implements OnDestroy {
         "You are a plain-spoken financial explainer inside a car affordability calculator for Indian buyers. " +
         "Given the user's numbers, write a short (3-5 sentence), friendly, honest explanation of whether this car fits their budget and why. " +
         "Mention the single biggest driver of the result. No markdown, no headers, just prose. Do not just repeat the numbers back; interpret them.";
-      const text = await this.gemini.generate(this.buildContext(), system);
+      const context = this.buildContext();
+      const text = await this.callWithFallback(
+        () => this.gemini.generate(context, system),
+        () => this.groq.generate(context, system)
+      );
       this.explainText.set(text.trim());
     } catch (e) {
-      this.explainError.set(e instanceof GeminiError ? e.message : 'Something went wrong.');
+      this.explainError.set(e instanceof AiProviderError ? e.message : 'Something went wrong.');
     } finally {
       this.explainPending.set(false);
     }
@@ -176,7 +237,10 @@ export class AiAssistant implements OnDestroy {
         'downPaymentPct (number, 0-100), interestRate (number, percent p.a.), loanTenureYears (number), ' +
         'fuelType ("petrol"|"diesel"|"cng"|"electric"), monthlyKm (number), ownershipYears (number). ' +
         'Convert "lakh" to value*100000 and "crore" to value*10000000.';
-      const jsonText = await this.gemini.generateJson(raw, system);
+      const jsonText = await this.callWithFallback(
+        () => this.gemini.generateJson(raw, system),
+        () => this.groq.generateJson(raw, system)
+      );
       const parsed = JSON.parse(stripFences(jsonText)) as Record<string, unknown>;
       const applied = this.applyFill(parsed);
       if (applied === 0) {
@@ -186,7 +250,7 @@ export class AiAssistant implements OnDestroy {
         this.fillInput.set('');
       }
     } catch (e) {
-      this.fillError.set(e instanceof GeminiError ? e.message : 'Could not understand that — try rephrasing.');
+      this.fillError.set(e instanceof AiProviderError ? e.message : 'Could not understand that — try rephrasing.');
     } finally {
       this.fillPending.set(false);
     }
@@ -226,10 +290,13 @@ export class AiAssistant implements OnDestroy {
         'You are a concise, honest car-affordability advisor for Indian buyers, embedded in a calculator app. ' +
         "Answer using the user's current numbers below. For what-if questions, suggest concrete specific tweaks (an exact down payment %, tenure, or price). " +
         'Keep answers under 120 words, plain prose, no markdown.\n\nCurrent numbers:\n' + this.buildContext();
-      const reply = await this.gemini.chat(history, system);
+      const reply = await this.callWithFallback(
+        () => this.gemini.chat(history, system),
+        () => this.groq.chat(history, system)
+      );
       this.chatMessages.set([...history, { role: 'model', text: reply.trim() }]);
     } catch (e) {
-      this.chatError.set(e instanceof GeminiError ? e.message : 'Something went wrong.');
+      this.chatError.set(e instanceof AiProviderError ? e.message : 'Something went wrong.');
     } finally {
       this.chatPending.set(false);
     }
@@ -238,5 +305,6 @@ export class AiAssistant implements OnDestroy {
   ngOnDestroy(): void {
     this.browserFinishedListener?.remove();
     if (this.popupPollTimer) window.clearInterval(this.popupPollTimer);
+    if (this.groqPopupPollTimer) window.clearInterval(this.groqPopupPollTimer);
   }
 }

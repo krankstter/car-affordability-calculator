@@ -10,15 +10,12 @@ import {
   sleep,
 } from './ai-http.util';
 
-const STORAGE_KEY = 'cac-gemini-key';
-const MODEL = 'gemini-flash-latest';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
-
-export type { ChatTurn };
-export { AiProviderError as GeminiError };
+const STORAGE_KEY = 'cac-groq-key';
+const MODEL = 'llama-3.3-70b-versatile';
+const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
 @Injectable({ providedIn: 'root' })
-export class GeminiService {
+export class GroqService {
   readonly apiKey = signal<string>(this.readStoredKey());
   readonly hasKey = computed(() => this.apiKey().trim().length > 0);
 
@@ -51,16 +48,17 @@ export class GeminiService {
 
   private async call(turns: ChatTurn[], systemInstruction?: string, jsonMode = false): Promise<string> {
     const key = this.apiKey().trim();
-    if (!key) throw new AiProviderError('No Gemini API key set.', 'no-key', 'Gemini');
+    if (!key) throw new AiProviderError('No Groq API key set.', 'no-key', 'Groq');
 
-    const body: Record<string, unknown> = {
-      contents: turns.map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
-    };
-    if (systemInstruction) {
-      body['systemInstruction'] = { parts: [{ text: systemInstruction }] };
+    const messages: { role: string; content: string }[] = [];
+    if (systemInstruction) messages.push({ role: 'system', content: systemInstruction });
+    for (const t of turns) {
+      messages.push({ role: t.role === 'model' ? 'assistant' : 'user', content: t.text });
     }
+
+    const body: Record<string, unknown> = { model: MODEL, messages };
     if (jsonMode) {
-      body['generationConfig'] = { responseMimeType: 'application/json' };
+      body['response_format'] = { type: 'json_object' };
     }
 
     let res: Response | undefined;
@@ -70,7 +68,7 @@ export class GeminiService {
           ENDPOINT,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
             body: JSON.stringify(body),
           },
           REQUEST_TIMEOUT_MS
@@ -81,9 +79,9 @@ export class GeminiService {
           continue;
         }
         if (err instanceof DOMException && err.name === 'AbortError') {
-          throw new AiProviderError('Gemini took too long to respond — try again.', 'unavailable', 'Gemini');
+          throw new AiProviderError('Groq took too long to respond — try again.', 'unavailable', 'Groq');
         }
-        throw new AiProviderError('Could not reach Gemini — check your internet connection.', 'network', 'Gemini');
+        throw new AiProviderError('Could not reach Groq — check your internet connection.', 'network', 'Groq');
       }
       if (res.ok || !RETRYABLE_STATUSES.has(res.status) || attempt === MAX_ATTEMPTS) break;
       await sleep(RETRY_DELAY_MS);
@@ -91,32 +89,28 @@ export class GeminiService {
 
     if (!res!.ok) {
       if (res!.status === 401 || res!.status === 403) {
-        throw new AiProviderError('Gemini rejected the API key. Double-check it was copied correctly.', 'invalid-key', 'Gemini');
+        throw new AiProviderError('Groq rejected the API key. Double-check it was copied correctly.', 'invalid-key', 'Groq');
       }
       if (res!.status === 429) {
-        throw new AiProviderError('Gemini rate limit hit — wait a moment and try again.', 'rate-limit', 'Gemini');
+        throw new AiProviderError('Groq rate limit hit — wait a moment and try again.', 'rate-limit', 'Groq');
       }
       if (res!.status === 503 || res!.status === 500 || res!.status === 502 || res!.status === 504) {
-        throw new AiProviderError(
-          "Gemini's servers are temporarily overloaded (this is Google's free-tier capacity, not a bug here). Already retried once — wait a moment and try again.",
-          'unavailable',
-          'Gemini'
-        );
+        throw new AiProviderError("Groq's servers are temporarily overloaded. Already retried once — wait a moment and try again.", 'unavailable', 'Groq');
       }
       if (res!.status === 400) {
-        throw new AiProviderError('Gemini rejected the request — the API key may be malformed.', 'invalid-key', 'Gemini');
+        throw new AiProviderError('Groq rejected the request — the API key may be malformed.', 'invalid-key', 'Groq');
       }
-      throw new AiProviderError(`Gemini request failed (HTTP ${res!.status}).`, 'unknown', 'Gemini');
+      throw new AiProviderError(`Groq request failed (HTTP ${res!.status}).`, 'unknown', 'Groq');
     }
 
     const data = await res!.json();
-    const blockReason = data?.promptFeedback?.blockReason;
-    if (blockReason) {
-      throw new AiProviderError(`Gemini declined to respond (${blockReason}).`, 'blocked', 'Gemini');
+    const finishReason = data?.choices?.[0]?.finish_reason;
+    if (finishReason === 'content_filter') {
+      throw new AiProviderError('Groq declined to respond (content filter).', 'blocked', 'Groq');
     }
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const text = data?.choices?.[0]?.message?.content;
     if (typeof text !== 'string') {
-      throw new AiProviderError('Gemini returned an unexpected response.', 'unknown', 'Gemini');
+      throw new AiProviderError('Groq returned an unexpected response.', 'unknown', 'Groq');
     }
     return text;
   }
