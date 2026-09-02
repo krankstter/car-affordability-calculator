@@ -1,0 +1,11 @@
+/*
+  Angular wraps this component's template in a <app-step-rail> host element.
+  Without display:contents, that host element (a flex item inside .inputs-col)
+  auto-sizes to fit just its single child, giving position:sticky on .step-rail
+  a containing block only as tall as the rail itself — leaving zero room to
+  actually stick. display:contents removes the host from the box tree so
+  .step-rail is treated as a direct flex child of .inputs-col instead.
+*/
+:host {
+  display: contents;
+}
