@@ -1,12 +1,13 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { CalculatorService } from '../../services/calculator.service';
 import { ShareOutcome, ShareService } from '../../services/share.service';
+import { CountUpDirective } from '../../shared/count-up.directive';
 
 const RING_RADIUS = 52;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 @Component({
-  imports: [],
+  imports: [CountUpDirective],
   selector: 'app-verdict',
   styleUrl: './verdict.scss',
   templateUrl: './verdict.html',

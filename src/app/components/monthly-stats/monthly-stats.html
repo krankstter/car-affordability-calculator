@@ -3,12 +3,12 @@
   <div class="stat-grid">
     <div class="stat-tile">
       <div class="stat-label">EMI</div>
-      <div class="stat-value">{{ fmtINR(calc.emi()) }}</div>
+      <div class="stat-value" [countUp]="calc.emi()" [countUpFormat]="fmtINR"></div>
       <div class="stat-sub">for {{ calc.loanTenureYears() * 12 }} months</div>
     </div>
     <div class="stat-tile">
       <div class="stat-label">Total monthly cost</div>
-      <div class="stat-value">{{ fmtINR(calc.totalMonthly()) }}</div>
+      <div class="stat-value" [countUp]="calc.totalMonthly()" [countUpFormat]="fmtINR"></div>
       <div class="stat-sub">EMI + running costs</div>
     </div>
   </div>
@@ -20,7 +20,7 @@
         <span class="pct" [attr.data-status]="calc.meterEmiStatus()">{{ fmtPct(calc.emiPct()) }}</span>
       </div>
       <div class="meter-track">
-        <div class="meter-fill" [attr.data-status]="calc.meterEmiStatus()" [style.width]="(calc.emiPct() < 100 ? calc.emiPct() : 100) + '%'"></div>
+        <div class="meter-fill" [attr.data-status]="calc.meterEmiStatus()" [style.--fill-pct]="(calc.emiPct() < 100 ? calc.emiPct() : 100) / 100"></div>
       </div>
     </div>
     <div>
@@ -29,7 +29,7 @@
         <span class="pct" [attr.data-status]="calc.meterTotalStatus()">{{ fmtPct(calc.carCostPct()) }}</span>
       </div>
       <div class="meter-track">
-        <div class="meter-fill" [attr.data-status]="calc.meterTotalStatus()" [style.width]="(calc.carCostPct() < 100 ? calc.carCostPct() : 100) + '%'"></div>
+        <div class="meter-fill" [attr.data-status]="calc.meterTotalStatus()" [style.--fill-pct]="(calc.carCostPct() < 100 ? calc.carCostPct() : 100) / 100"></div>
       </div>
     </div>
   </div>

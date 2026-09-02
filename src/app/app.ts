@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, afterNextRender } from '@angular/core';
 import { Topbar } from './components/topbar/topbar';
 import { IncomeForm } from './components/income-form/income-form';
 import { VehicleLoanForm } from './components/vehicle-loan-form/vehicle-loan-form';
@@ -41,4 +41,34 @@ import { InstallBanner } from './components/install-banner/install-banner';
   styleUrl: './app.scss',
   templateUrl: './app.html',
 })
-export class App {}
+export class App {
+  constructor() {
+    // Drives the .glass specular-highlight position (see .glass::before in styles.scss).
+    // A single viewport-relative light source, not per-card tracking — cheap (one listener,
+    // no layout reads) and still reads as "the glass reacts to you" without reflow cost.
+    afterNextRender(() => {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !window.matchMedia('(hover: hover)').matches) {
+        return;
+      }
+      const root = document.documentElement;
+      let queued = false;
+      let lastX = 0;
+      let lastY = 0;
+      window.addEventListener(
+        'pointermove',
+        (e) => {
+          lastX = e.clientX;
+          lastY = e.clientY;
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(() => {
+            queued = false;
+            root.style.setProperty('--pointer-x', `${(lastX / window.innerWidth) * 100}%`);
+            root.style.setProperty('--pointer-y', `${(lastY / window.innerHeight) * 100}%`);
+          });
+        },
+        { passive: true }
+      );
+    });
+  }
+}

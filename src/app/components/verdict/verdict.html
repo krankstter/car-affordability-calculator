@@ -15,7 +15,7 @@
         </g>
       </svg>
       <div class="score-num">
-        <span class="score-value">{{ calc.affordabilityScore() }}</span>
+        <span class="score-value" [countUp]="calc.affordabilityScore()"></span>
         <span class="score-max">/ 100</span>
       </div>
     </div>
