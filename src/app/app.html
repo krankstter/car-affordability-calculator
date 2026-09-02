@@ -1,0 +1,41 @@
+<a class="skip-link" href="#calcForm">Skip to calculator inputs</a>
+
+<div class="aurora" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+  <span class="blob b4"></span>
+</div>
+
+<div class="app">
+  <app-topbar />
+
+  <main class="layout">
+    <section class="inputs-col">
+      <app-step-rail />
+      <form id="calcForm">
+        <app-income-form />
+        <app-vehicle-loan-form />
+        <app-running-costs-form />
+        <app-ownership-horizon-form />
+      </form>
+    </section>
+
+    <aside class="results-col" id="results-top">
+      <app-verdict />
+      <app-ai-assistant />
+      <app-perspectives />
+      <app-monthly-stats />
+      <app-monthly-chart />
+      <app-yearly-chart />
+      <app-loan-summary />
+    </aside>
+  </main>
+
+  <footer class="disclaimer glass">
+    Estimates only, for educational purposes, not financial advice. Built on commonly cited rules of thumb: EMI ≤ 20% of monthly income, total car cost ≤ 10–15% of income, total committed outflow (EMI + existing debt + SIPs) ≤ 40% of income, the "20/4/10" rule (20% down, ≤4-year loan, ≤10% of income), insurance ≈ 2.25% of on-road value/year (tapering down year-over-year with your depreciation rate in the multi-year projection), maintenance ≈ 1.5% of price/year rising ~8%/yr with age, and 10–15%/year declining-balance depreciation. Actual figures vary by state, insurer, model and usage. Confirm with your dealer, bank and insurer before deciding.
+  </footer>
+</div>
+
+<app-mobile-summary-bar />
+<app-tooltip />

@@ -1,0 +1,36 @@
+<div class="card glass">
+  <h2 class="card-eyebrow">Monthly numbers</h2>
+  <div class="stat-grid">
+    <div class="stat-tile">
+      <div class="stat-label">EMI</div>
+      <div class="stat-value">{{ fmtINR(calc.emi()) }}</div>
+      <div class="stat-sub">for {{ calc.loanTenureYears() * 12 }} months</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Total monthly cost</div>
+      <div class="stat-value">{{ fmtINR(calc.totalMonthly()) }}</div>
+      <div class="stat-sub">EMI + running costs</div>
+    </div>
+  </div>
+
+  <div class="meter-group">
+    <div>
+      <div class="meter-label-row">
+        <span>EMI vs income</span>
+        <span class="pct" [attr.data-status]="calc.meterEmiStatus()">{{ fmtPct(calc.emiPct()) }}</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" [attr.data-status]="calc.meterEmiStatus()" [style.width]="(calc.emiPct() < 100 ? calc.emiPct() : 100) + '%'"></div>
+      </div>
+    </div>
+    <div>
+      <div class="meter-label-row">
+        <span>Total car cost vs income</span>
+        <span class="pct" [attr.data-status]="calc.meterTotalStatus()">{{ fmtPct(calc.carCostPct()) }}</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" [attr.data-status]="calc.meterTotalStatus()" [style.width]="(calc.carCostPct() < 100 ? calc.carCostPct() : 100) + '%'"></div>
+      </div>
+    </div>
+  </div>
+</div>

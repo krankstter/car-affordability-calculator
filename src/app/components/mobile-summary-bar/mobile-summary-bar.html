@@ -1,0 +1,10 @@
+<button type="button" class="mobile-summary-bar" [attr.data-level]="calc.verdictLevel()" (click)="goToResults()">
+  <span class="msb-dot" aria-hidden="true"></span>
+  <span class="msb-text">
+    <span class="msb-title">{{ calc.verdictTitle() }}</span>
+    <span class="msb-sub">{{ fmtINR(calc.totalMonthly()) }}/mo &middot; score {{ calc.affordabilityScore() }}</span>
+  </span>
+  <span class="msb-arrow" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </span>
+</button>

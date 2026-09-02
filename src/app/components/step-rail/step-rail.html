@@ -1,0 +1,16 @@
+<nav class="step-rail glass" aria-label="Calculator steps">
+  @for (step of steps; track step.id; let i = $index) {
+    <button
+      type="button"
+      class="step-dot"
+      [attr.data-state]="i < activeIndex() ? 'done' : i === activeIndex() ? 'active' : 'pending'"
+      (click)="goTo(step.id)"
+    >
+      <span class="dot-num">{{ i < activeIndex() ? '' : i + 1 }}</span>
+      <span class="dot-label">{{ step.label }}</span>
+    </button>
+    @if (i < steps.length - 1) {
+      <span class="step-connector" [attr.data-state]="i < activeIndex() ? 'done' : 'pending'"></span>
+    }
+  }
+</nav>

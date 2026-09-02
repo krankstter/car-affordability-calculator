@@ -1,0 +1,60 @@
+<div class="card glass" id="step-loan">
+  <div class="card-eyebrow">Step 2</div>
+  <h2 class="card-title">Car &amp; loan<span>Purchase price and how you'll finance it</span></h2>
+
+  <div class="field">
+    <div class="field-label"><label for="onRoadPrice">On-road price</label></div>
+    <div class="input-shell">
+      <span class="prefix">₹</span>
+      <input type="number" id="onRoadPrice" min="50000" step="5000" [value]="calc.onRoadPrice()" (input)="calc.onRoadPrice.set(numFromEvent($event))" />
+    </div>
+    <p class="field-caption">The final, all-in price your dealer quoted: ex-showroom + RTO road tax + insurance + accessories.</p>
+  </div>
+
+  <div class="readout-row">
+    <div class="readout">
+      <div class="r-label">Loan amount</div>
+      <div class="r-value">{{ fmtINR(calc.loanAmt()) }}</div>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <div class="field range-field">
+    <div class="range-top">
+      <label for="downPaymentPct">Down payment</label>
+      <span class="range-value-wrap">
+        <input
+          type="number"
+          class="range-value-input"
+          id="downPaymentPctNum"
+          min="0"
+          max="60"
+          step="0.01"
+          [value]="calc.downPaymentPct().toFixed(2)"
+          (input)="onDecimalInput($event)"
+          aria-label="Down payment percentage, exact"
+        />%
+      </span>
+    </div>
+    <input type="range" id="downPaymentPct" min="0" max="60" step="0.2" [value]="calc.downPaymentPct()" [style.--fill]="downFillPct() + '%'" (input)="onRangeInput($event)" />
+    <p class="field-caption">≈ {{ fmtINR(calc.downAmt()) }} paid upfront. The 20/4/10 rule suggests at least 20% down.</p>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <div class="field-label"><label for="interestRate">Interest rate</label><span class="unit">p.a.</span></div>
+      <div class="input-shell">
+        <input type="number" id="interestRate" min="0" max="20" step="0.05" [value]="calc.interestRate()" (input)="calc.interestRate.set(numFromEvent($event))" />
+        <span class="prefix">%</span>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label"><label for="loanTenureYears">Loan tenure</label><span class="unit">years</span></div>
+      <div class="input-shell">
+        <input type="number" id="loanTenureYears" min="1" max="8" step="1" [value]="calc.loanTenureYears()" (input)="calc.loanTenureYears.set(numFromEvent($event))" />
+        <span class="prefix">yr</span>
+      </div>
+    </div>
+  </div>
+</div>

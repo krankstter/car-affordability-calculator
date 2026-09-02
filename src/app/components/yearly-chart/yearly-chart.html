@@ -1,0 +1,71 @@
+<div class="card glass">
+  <div class="chart-header">
+    <h2 class="card-title" style="margin-bottom:0">Cost over ownership years</h2>
+    <button type="button" class="table-toggle-btn" (click)="toggleTable()">{{ showTable() ? 'View chart' : 'View table' }}</button>
+  </div>
+
+  @if (!showTable()) {
+    <div class="year-chart-wrap">
+      <svg
+        class="year-chart-svg"
+        [attr.viewBox]="'0 0 ' + geometry().width + ' ' + geometry().height"
+        preserveAspectRatio="none"
+        role="img"
+        [attr.aria-label]="'Yearly cost projection over ' + geometry().bars.length + ' years'"
+      >
+        @for (gy of geometry().gridLines; track gy) {
+          <line class="grid-line" x1="0" [attr.y1]="gy" [attr.x2]="geometry().width" [attr.y2]="gy" />
+        }
+        <line class="grid-line grid-baseline" x1="0" [attr.y1]="geometry().chartHeight" [attr.x2]="geometry().width" [attr.y2]="geometry().chartHeight" />
+
+        @for (bar of geometry().bars; track bar.year) {
+          @for (seg of bar.segments; track seg.key) {
+            @if (seg.height > 0) {
+              <rect
+                class="year-seg"
+                rx="2"
+                [attr.x]="seg.x" [attr.y]="seg.y" [attr.width]="seg.width" [attr.height]="seg.height"
+                [style.fill]="seg.colorVar"
+                tabindex="0"
+                role="img"
+                [attr.aria-label]="segLabel(bar.year, seg)"
+                (mouseenter)="onEnter($event, bar.year, seg)"
+                (mouseleave)="onLeave()"
+                (focus)="onEnter($event, bar.year, seg)"
+                (blur)="onLeave()"
+                (click)="onTap($event, bar.year, seg)"
+              ></rect>
+            }
+          }
+          <text class="year-label" [attr.x]="bar.labelX" [attr.y]="geometry().chartHeight + 11" text-anchor="middle">Yr {{ bar.year }}</text>
+        }
+      </svg>
+    </div>
+    <div class="chart-legend">
+      @for (cat of categories; track cat.key) {
+        <div class="legend-item">
+          <span class="sw" [style.background]="cat.colorVar"></span>
+          <span>{{ cat.label }}</span>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="chart-table-wrap">
+      <table class="chart-table">
+        <thead><tr><th>Year</th><th>EMI</th><th>Fuel</th><th>Insurance</th><th>Maintenance</th><th>Total</th></tr></thead>
+        <tbody>
+          @for (year of calc.yearlyProjection(); track year.year) {
+            <tr>
+              <td>Yr {{ year.year }}</td>
+              <td>{{ fmtINR(year.emi) }}</td>
+              <td>{{ fmtINR(year.fuel) }}</td>
+              <td>{{ fmtINR(year.insurance) }}</td>
+              <td>{{ fmtINR(year.maintenance) }}</td>
+              <td><strong>{{ fmtINR(year.total) }}</strong></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

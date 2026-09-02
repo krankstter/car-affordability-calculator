@@ -1,0 +1,5 @@
+@if (tooltip.state().visible) {
+  <div class="chart-tooltip" [style.left.px]="tooltip.state().x" [style.top.px]="tooltip.state().y">
+    {{ tooltip.state().text }}
+  </div>
+}

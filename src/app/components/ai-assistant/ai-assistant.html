@@ -1,0 +1,105 @@
+<div class="card glass ai-card">
+  <div class="chart-header">
+    <h2 class="card-title" style="margin-bottom:0">AI assistant<span>Powered by Gemini, using the key you provide</span></h2>
+  </div>
+
+  @if (!hasKey()) {
+    <div class="ai-key-gate">
+      <p class="field-caption">
+        Add a free Gemini API key to unlock an AI explanation of your result, natural-language quick-fill, and a chat advisor.
+        Get one at <strong>aistudio.google.com/apikey</strong> — no card required. The key is stored only on this device.
+      </p>
+      <div class="field" style="margin-top:10px">
+        <div class="input-shell">
+          <input
+            type="password"
+            placeholder="Paste your Gemini API key"
+            [value]="keyInput()"
+            (input)="keyInput.set($any($event.target).value)"
+            (keydown.enter)="saveKey()"
+          />
+        </div>
+      </div>
+      <button type="button" class="suggest-btn" style="padding:8px 16px; min-height:34px" (click)="saveKey()">Save key</button>
+    </div>
+  } @else {
+    <div class="ai-tabs">
+      <button type="button" class="ai-tab" [attr.data-active]="activeTab() === 'explain'" (click)="setTab('explain')">Explain result</button>
+      <button type="button" class="ai-tab" [attr.data-active]="activeTab() === 'fill'" (click)="setTab('fill')">Quick-fill</button>
+      <button type="button" class="ai-tab" [attr.data-active]="activeTab() === 'chat'" (click)="setTab('chat')">Ask advisor</button>
+    </div>
+
+    @if (activeTab() === 'explain') {
+      <div class="ai-panel">
+        <p class="field-caption">Get a plain-English read on your current numbers, from Gemini.</p>
+        <button type="button" class="suggest-btn" style="padding:8px 16px; min-height:34px; margin-top:8px" [disabled]="explainPending()" (click)="explain()">
+          {{ explainPending() ? 'Thinking…' : (explainText() ? 'Regenerate' : 'Explain my result') }}
+        </button>
+        @if (explainError()) {
+          <p class="ai-error">{{ explainError() }}</p>
+        }
+        @if (explainText()) {
+          <p class="ai-response">{{ explainText() }}</p>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'fill') {
+      <div class="ai-panel">
+        <p class="field-caption">Describe your situation in a sentence and Gemini will fill in the matching fields above.</p>
+        <div class="field" style="margin-top:8px">
+          <div class="input-shell" style="height:auto; padding:10px 12px">
+            <textarea
+              rows="2"
+              placeholder="e.g. I earn 80k a month, I'm 27, want a car around 9 lakh with 15% down over 4 years"
+              style="flex:1; border:none; background:transparent; outline:none; font:inherit; color:inherit; resize:vertical; min-height:44px"
+              [value]="fillInput()"
+              (input)="fillInput.set($any($event.target).value)"
+            ></textarea>
+          </div>
+        </div>
+        <button type="button" class="suggest-btn" style="padding:8px 16px; min-height:34px" [disabled]="fillPending()" (click)="runFill()">
+          {{ fillPending() ? 'Reading…' : 'Fill the form' }}
+        </button>
+        @if (fillError()) {
+          <p class="ai-error">{{ fillError() }}</p>
+        }
+        @if (fillApplied()) {
+          <p class="ai-success">Updated — scroll up to see the filled-in fields.</p>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'chat') {
+      <div class="ai-panel">
+        <p class="field-caption">Ask "what if" questions — the advisor sees your current numbers every time you ask.</p>
+        @if (chatMessages().length > 0) {
+          <div class="chat-thread">
+            @for (msg of chatMessages(); track $index) {
+              <div class="chat-bubble" [attr.data-role]="msg.role">{{ msg.text }}</div>
+            }
+          </div>
+        }
+        @if (chatError()) {
+          <p class="ai-error">{{ chatError() }}</p>
+        }
+        <div class="field-row" style="margin-top:10px; grid-template-columns: 1fr auto">
+          <div class="input-shell">
+            <input
+              type="text"
+              placeholder="What if I put down 30% instead?"
+              [value]="chatInput()"
+              (input)="chatInput.set($any($event.target).value)"
+              (keydown.enter)="sendChat()"
+            />
+          </div>
+          <button type="button" class="suggest-btn" style="padding:8px 16px; min-height:44px" [disabled]="chatPending()" (click)="sendChat()">
+            {{ chatPending() ? '…' : 'Send' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <button type="button" class="ai-forget-key" (click)="forgetKey()">Remove saved API key</button>
+  }
+</div>

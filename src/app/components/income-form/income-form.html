@@ -1,0 +1,53 @@
+<div class="card glass" id="step-income">
+  <div class="card-eyebrow">Step 1</div>
+  <h2 class="card-title">Income &amp; obligations<span>Used to judge whether the car fits your budget</span></h2>
+
+  <div class="field">
+    <div class="field-label"><label for="monthlyIncome">Monthly household income</label></div>
+    <div class="input-shell">
+      <span class="prefix">₹</span>
+      <input type="number" id="monthlyIncome" min="0" step="1000" [value]="calc.monthlyIncome()" (input)="calc.monthlyIncome.set(numFromEvent($event))" />
+    </div>
+    <p class="field-caption">Combined income is fine to use, but if it relies on more than one earner, treat the "comfortable" bands below a little more cautiously, since it depends on multiple incomes continuing.</p>
+  </div>
+
+  <div class="field">
+    <div class="field-row">
+      <div class="field">
+        <div class="field-label"><label for="age">Your age</label></div>
+        <div class="input-shell">
+          <input type="number" id="age" min="18" max="75" step="1" [value]="calc.age()" (input)="calc.age.set(numFromEvent($event))" />
+          <span class="prefix">yrs</span>
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label"><label for="employmentType">Employment type</label></div>
+        <div class="input-shell select-shell">
+          <select id="employmentType" [value]="calc.employmentType()" (change)="onEmploymentTypeChange($event)">
+            <option value="salaried">Salaried</option>
+            <option value="self">Self-employed</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <p class="field-caption">Used only for the loan-eligibility check below: most Indian lenders require the loan to mature by ~65 (salaried) or ~68 (self-employed).</p>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><label for="existingEMIs">Existing monthly EMIs / debt</label></div>
+    <div class="input-shell">
+      <span class="prefix">₹</span>
+      <input type="number" id="existingEMIs" min="0" step="500" [value]="calc.existingEMIs()" (input)="calc.existingEMIs.set(numFromEvent($event))" />
+    </div>
+    <p class="field-caption">Home loan, personal loan, other EMIs already running.</p>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><label for="sipMonthly">Monthly SIP / investment contributions</label></div>
+    <div class="input-shell">
+      <span class="prefix">₹</span>
+      <input type="number" id="sipMonthly" min="0" step="500" [value]="calc.sipMonthly()" (input)="calc.sipMonthly.set(numFromEvent($event))" />
+    </div>
+    <p class="field-caption">Treated as a protected commitment, not spare cash. It's included with EMIs and debt in the total committed-outflow check, so the car loan doesn't quietly eat into your investing.</p>
+  </div>
+</div>

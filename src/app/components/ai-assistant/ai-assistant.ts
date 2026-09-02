@@ -1,0 +1,167 @@
+import { Component, inject, signal } from '@angular/core';
+import { CalculatorService } from '../../services/calculator.service';
+import { GeminiService, ChatTurn, GeminiError } from '../../services/gemini.service';
+import { fmtINR, fmtPct } from '../../shared/format';
+
+type Tab = 'explain' | 'fill' | 'chat';
+
+function stripFences(s: string): string {
+  const trimmed = s.trim();
+  if (trimmed.startsWith('```')) {
+    return trimmed.replace(/^```(json)?/i, '').replace(/```$/, '').trim();
+  }
+  return trimmed;
+}
+
+@Component({
+  imports: [],
+  selector: 'app-ai-assistant',
+  styleUrl: './ai-assistant.css',
+  templateUrl: './ai-assistant.html',
+})
+export class AiAssistant {
+  protected readonly calc = inject(CalculatorService);
+  private readonly gemini = inject(GeminiService);
+
+  protected readonly hasKey = this.gemini.hasKey;
+  protected readonly keyInput = signal('');
+  protected readonly showKeyField = signal(false);
+
+  protected readonly activeTab = signal<Tab>('explain');
+
+  protected readonly explainText = signal('');
+  protected readonly explainPending = signal(false);
+  protected readonly explainError = signal('');
+
+  protected readonly fillInput = signal('');
+  protected readonly fillPending = signal(false);
+  protected readonly fillError = signal('');
+  protected readonly fillApplied = signal(false);
+
+  protected readonly chatMessages = signal<ChatTurn[]>([]);
+  protected readonly chatInput = signal('');
+  protected readonly chatPending = signal(false);
+  protected readonly chatError = signal('');
+
+  setTab(tab: Tab): void {
+    this.activeTab.set(tab);
+  }
+
+  saveKey(): void {
+    if (!this.keyInput().trim()) return;
+    this.gemini.setApiKey(this.keyInput());
+    this.keyInput.set('');
+    this.showKeyField.set(false);
+  }
+
+  forgetKey(): void {
+    this.gemini.clearApiKey();
+    this.explainText.set('');
+    this.chatMessages.set([]);
+  }
+
+  private buildContext(): string {
+    const c = this.calc;
+    return [
+      `Monthly household income: ${fmtINR(c.monthlyIncome())}, age ${c.age()}, ${c.employmentType() === 'self' ? 'self-employed' : 'salaried'}.`,
+      `Existing monthly EMIs/debt: ${fmtINR(c.existingEMIs())}. Monthly SIP/investments: ${fmtINR(c.sipMonthly())}.`,
+      `Car on-road price: ${fmtINR(c.onRoadPrice())}. Down payment: ${c.downPaymentPct()}% (${fmtINR(c.downAmt())}). Loan: ${fmtINR(c.loanAmt())} at ${c.interestRate()}% for ${c.loanTenureYears()} years -> EMI ${fmtINR(c.emi())}/month.`,
+      `Fuel type: ${c.fuelType()}. Monthly driving: ${c.monthlyKm()} km. Running costs: fuel ${fmtINR(c.fuelMonthly())}/mo, insurance ${fmtINR(c.insuranceMonthly())}/mo, maintenance ${fmtINR(c.maintenanceMonthly())}/mo.`,
+      `Total monthly cost: ${fmtINR(c.totalMonthly())} (EMI is ${fmtPct(c.emiPct())} of income, total car cost is ${fmtPct(c.carCostPct())} of income, total committed outflow is ${fmtPct(c.debtPct())} of income).`,
+      `Verdict: "${c.verdictTitle()}" (affordability score ${c.affordabilityScore()}/100). Checklist: down payment >=20% ${c.downPaymentPass() ? 'PASS' : 'FAIL'}, tenure <=4yr ${c.tenurePass() ? 'PASS' : 'FAIL'}, total cost <=10% of income ${c.totalCostPass() ? 'PASS' : 'FAIL'}.`,
+      `Ownership horizon: ${c.ownershipYears()} years at ${c.depreciationRatePct()}%/yr depreciation. Estimated resale value: ${fmtINR(c.resaleValue())}.`,
+    ].join('\n');
+  }
+
+  async explain(): Promise<void> {
+    if (!this.gemini.hasKey() || this.explainPending()) return;
+    this.explainPending.set(true);
+    this.explainError.set('');
+    try {
+      const system =
+        "You are a plain-spoken financial explainer inside a car affordability calculator for Indian buyers. " +
+        "Given the user's numbers, write a short (3-5 sentence), friendly, honest explanation of whether this car fits their budget and why. " +
+        "Mention the single biggest driver of the result. No markdown, no headers, just prose. Do not just repeat the numbers back; interpret them.";
+      const text = await this.gemini.generate(this.buildContext(), system);
+      this.explainText.set(text.trim());
+    } catch (e) {
+      this.explainError.set(e instanceof GeminiError ? e.message : 'Something went wrong.');
+    } finally {
+      this.explainPending.set(false);
+    }
+  }
+
+  async runFill(): Promise<void> {
+    const raw = this.fillInput().trim();
+    if (!raw || !this.gemini.hasKey() || this.fillPending()) return;
+    this.fillPending.set(true);
+    this.fillError.set('');
+    this.fillApplied.set(false);
+    try {
+      const system =
+        "Extract car-affordability-calculator inputs from the user's free-text description. " +
+        'Respond with ONLY a JSON object (no markdown fences, no commentary). Only include keys the user actually implied; omit anything not mentioned. ' +
+        'Valid keys and types: monthlyIncome (number, INR/month), age (number), employmentType ("salaried"|"self"), ' +
+        'existingEMIs (number, INR/month), sipMonthly (number, INR/month), onRoadPrice (number, INR), ' +
+        'downPaymentPct (number, 0-100), interestRate (number, percent p.a.), loanTenureYears (number), ' +
+        'fuelType ("petrol"|"diesel"|"cng"|"electric"), monthlyKm (number), ownershipYears (number). ' +
+        'Convert "lakh" to value*100000 and "crore" to value*10000000.';
+      const jsonText = await this.gemini.generateJson(raw, system);
+      const parsed = JSON.parse(stripFences(jsonText)) as Record<string, unknown>;
+      const applied = this.applyFill(parsed);
+      if (applied === 0) {
+        this.fillError.set("Couldn't find any recognizable details in that — try including specific numbers.");
+      } else {
+        this.fillApplied.set(true);
+        this.fillInput.set('');
+      }
+    } catch (e) {
+      this.fillError.set(e instanceof GeminiError ? e.message : 'Could not understand that — try rephrasing.');
+    } finally {
+      this.fillPending.set(false);
+    }
+  }
+
+  private applyFill(f: Record<string, unknown>): number {
+    const c = this.calc;
+    let count = 0;
+    const num = (v: unknown): number | null => (typeof v === 'number' && isFinite(v) ? v : null);
+    let n: number | null;
+    if ((n = num(f['monthlyIncome'])) !== null) { c.monthlyIncome.set(n); count++; }
+    if ((n = num(f['age'])) !== null) { c.age.set(n); count++; }
+    if (f['employmentType'] === 'salaried' || f['employmentType'] === 'self') { c.employmentType.set(f['employmentType']); count++; }
+    if ((n = num(f['existingEMIs'])) !== null) { c.existingEMIs.set(n); count++; }
+    if ((n = num(f['sipMonthly'])) !== null) { c.sipMonthly.set(n); count++; }
+    if ((n = num(f['onRoadPrice'])) !== null) { c.onRoadPrice.set(n); count++; }
+    if ((n = num(f['downPaymentPct'])) !== null) { c.downPaymentPct.set(n); count++; }
+    if ((n = num(f['interestRate'])) !== null) { c.interestRate.set(n); count++; }
+    if ((n = num(f['loanTenureYears'])) !== null) { c.loanTenureYears.set(n); count++; }
+    const fuel = f['fuelType'];
+    if (fuel === 'petrol' || fuel === 'diesel' || fuel === 'cng' || fuel === 'electric') { c.onFuelTypeChange(fuel); count++; }
+    if ((n = num(f['monthlyKm'])) !== null) { c.monthlyKm.set(n); count++; }
+    if ((n = num(f['ownershipYears'])) !== null) { c.ownershipYears.set(n); count++; }
+    return count;
+  }
+
+  async sendChat(): Promise<void> {
+    const text = this.chatInput().trim();
+    if (!text || !this.gemini.hasKey() || this.chatPending()) return;
+    this.chatPending.set(true);
+    this.chatError.set('');
+    const history = [...this.chatMessages(), { role: 'user' as const, text }];
+    this.chatMessages.set(history);
+    this.chatInput.set('');
+    try {
+      const system =
+        'You are a concise, honest car-affordability advisor for Indian buyers, embedded in a calculator app. ' +
+        "Answer using the user's current numbers below. For what-if questions, suggest concrete specific tweaks (an exact down payment %, tenure, or price). " +
+        'Keep answers under 120 words, plain prose, no markdown.\n\nCurrent numbers:\n' + this.buildContext();
+      const reply = await this.gemini.chat(history, system);
+      this.chatMessages.set([...history, { role: 'model', text: reply.trim() }]);
+    } catch (e) {
+      this.chatError.set(e instanceof GeminiError ? e.message : 'Something went wrong.');
+    } finally {
+      this.chatPending.set(false);
+    }
+  }
+}

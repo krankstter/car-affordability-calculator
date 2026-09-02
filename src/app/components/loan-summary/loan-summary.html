@@ -1,0 +1,9 @@
+<div class="card glass">
+  <h2 class="card-eyebrow">Loan &amp; resale summary</h2>
+  <div class="summary-grid">
+    <div class="summary-item"><span class="s-label">Total interest payable</span><span class="s-value">{{ fmtINR(calc.totalInterest()) }}</span></div>
+    <div class="summary-item"><span class="s-label">Total paid over loan term</span><span class="s-value">{{ fmtINR(calc.totalPayable()) }}</span></div>
+    <div class="summary-item"><span class="s-label">Estimated resale value</span><span class="s-value">{{ fmtINR(calc.resaleValue()) }}</span></div>
+    <div class="summary-item"><span class="s-label">Value lost to depreciation</span><span class="s-value">{{ fmtINR(calc.valueLost()) }}</span></div>
+  </div>
+</div>

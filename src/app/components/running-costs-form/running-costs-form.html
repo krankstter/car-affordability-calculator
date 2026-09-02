@@ -1,0 +1,74 @@
+<div class="card glass" id="step-costs">
+  <div class="card-eyebrow">Step 3</div>
+  <h2 class="card-title">Running costs<span>Fuel, insurance, service and the small recurring stuff</span></h2>
+
+  <div class="field-row">
+    <div class="field">
+      <div class="field-label"><label for="fuelType">Fuel type</label></div>
+      <div class="input-shell select-shell">
+        <select id="fuelType" [value]="calc.fuelType()" (change)="onFuelTypeChange($event)">
+          <option value="petrol">Petrol</option>
+          <option value="diesel">Diesel</option>
+          <option value="cng">CNG</option>
+          <option value="electric">Electric</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label"><label for="monthlyKm">Monthly driving</label><span class="unit">km</span></div>
+      <div class="input-shell">
+        <input type="number" id="monthlyKm" min="0" step="50" [value]="calc.monthlyKm()" (input)="calc.monthlyKm.set(numFromEvent($event))" />
+        <span class="prefix">km</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <div class="field-label">
+        <label for="fuelPrice">{{ calc.fuelType() === 'electric' ? 'Electricity price (₹/kWh)' : calc.fuelType() === 'cng' ? 'Fuel price (₹/kg)' : 'Fuel price (₹/litre)' }}</label>
+      </div>
+      <div class="input-shell">
+        <span class="prefix">₹</span>
+        <input type="number" id="fuelPrice" min="0" step="0.5" [value]="calc.fuelPrice()" (input)="calc.fuelPrice.set(numFromEvent($event))" />
+      </div>
+    </div>
+    <div class="field">
+      <div class="field-label">
+        <label for="mileage">{{ calc.fuelType() === 'electric' ? 'Efficiency (km/kWh)' : calc.fuelType() === 'cng' ? 'Mileage (km/kg)' : 'Mileage (km/litre)' }}</label>
+      </div>
+      <div class="input-shell">
+        <input type="number" id="mileage" min="1" step="0.5" [value]="calc.mileage()" (input)="calc.mileage.set(numFromEvent($event))" />
+      </div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><label for="insuranceAnnual">Insurance premium</label><span class="unit">per year</span></div>
+    <div class="input-shell">
+      <span class="prefix">₹</span>
+      <input type="number" id="insuranceAnnual" min="0" step="500" [value]="calc.insuranceAnnual()" (input)="calc.insuranceAnnual.set(numFromEvent($event))" />
+      <button type="button" class="suggest-btn" (click)="calc.suggestInsurance()">Suggest</button>
+    </div>
+    <p class="field-caption">Industry average ≈ 2.25% of on-road value per year for comprehensive cover. Used as your renewal-year premium; see the field below for how the first few years are usually bundled at purchase.</p>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><label for="prepaidTPYears">Third-party cover already bundled at purchase</label><span class="unit">years</span></div>
+    <div class="input-shell">
+      <input type="number" id="prepaidTPYears" min="0" max="5" step="1" [value]="calc.prepaidTPYears()" (input)="calc.prepaidTPYears.set(numFromEvent($event))" />
+      <span class="prefix">yr</span>
+    </div>
+    <p class="field-caption">New cars in India typically ship with 1 year comprehensive + 3 years third-party liability prepaid on-road (regulatory minimum). The projection below shows ₹0 insurance cost in those bundled years, then resumes your renewal premium. Set to 0 if your deal doesn't bundle this.</p>
+  </div>
+
+  <div class="field">
+    <div class="field-label"><label for="maintenanceAnnual">Maintenance &amp; service reserve</label><span class="unit">per year</span></div>
+    <div class="input-shell">
+      <span class="prefix">₹</span>
+      <input type="number" id="maintenanceAnnual" min="0" step="500" [value]="calc.maintenanceAnnual()" (input)="calc.maintenanceAnnual.set(numFromEvent($event))" />
+      <button type="button" class="suggest-btn" (click)="calc.suggestMaintenance()">Suggest</button>
+    </div>
+    <p class="field-caption">Typical spend ≈ 1.5% of price per year, rising ~8%/yr as the car ages (used in the year-by-year projection).</p>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="card glass">
+  <h2 class="card-eyebrow">Other perspectives</h2>
+  <p class="field-caption" style="margin-bottom:14px">Different sources weigh this differently: a "stretch" on one can be fine by another.</p>
+  <div class="perspective-list">
+    @for (item of calc.perspectives(); track item.name) {
+      <div class="perspective-row" [attr.data-pass]="item.status">
+        <span class="dot" aria-hidden="true"></span>
+        <div class="p-body">
+          <div class="p-name">{{ item.name }}</div>
+          <div class="p-detail">{{ item.detail }}</div>
+          <div class="p-source">{{ item.source }}</div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
