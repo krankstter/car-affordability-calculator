@@ -321,10 +321,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .input-shell:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border)); }
 .input-shell:focus-within { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent); border-color: var(--accent); }
 .input-shell .prefix { font-size: 0.81rem; color: var(--ink-muted); font-weight: 600; }
-.input-shell input[type="number"], .input-shell select {
+.input-shell input[type="number"], .input-shell input[type="text"], .input-shell input[type="password"], .input-shell select {
   flex: 1; border: none; background: transparent; outline: none;
   font-size: 1rem; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums;
   height: 100%; min-width: 0;
+}
+.input-shell textarea {
+  flex: 1; border: none; background: transparent; outline: none;
+  font: inherit; color: inherit; resize: vertical; min-width: 0;
 }
 .input-shell select { appearance: none; -webkit-appearance: none; cursor: pointer; }
 .input-shell.select-shell::after {

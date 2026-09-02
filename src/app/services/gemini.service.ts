@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 
 const STORAGE_KEY = 'cac-gemini-key';
-const MODEL = 'gemini-3.7-flash';
+const MODEL = 'gemini-flash-latest';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 export interface ChatTurn {
@@ -63,9 +63,9 @@ export class GeminiService {
 
     let res: Response;
     try {
-      res = await fetch(`${ENDPOINT}?key=${encodeURIComponent(key)}`, {
+      res = await fetch(ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
         body: JSON.stringify(body),
       });
     } catch {
