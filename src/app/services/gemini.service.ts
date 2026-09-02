@@ -16,11 +16,22 @@ export class GeminiError extends Error {
 }
 
 const RETRYABLE_STATUSES = new Set([429, 500, 502, 503, 504]);
-const MAX_ATTEMPTS = 3;
-const RETRY_DELAYS_MS = [600, 1800];
+const MAX_ATTEMPTS = 2;
+const RETRY_DELAY_MS = 1000;
+const REQUEST_TIMEOUT_MS = 20000;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -72,16 +83,27 @@ export class GeminiService {
     let res: Response | undefined;
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       try {
-        res = await fetch(ENDPOINT, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
-          body: JSON.stringify(body),
-        });
-      } catch {
+        res = await fetchWithTimeout(
+          ENDPOINT,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-goog-api-key': key },
+            body: JSON.stringify(body),
+          },
+          REQUEST_TIMEOUT_MS
+        );
+      } catch (err) {
+        if (attempt < MAX_ATTEMPTS) {
+          await sleep(RETRY_DELAY_MS);
+          continue;
+        }
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          throw new GeminiError('Gemini took too long to respond — try again.', 'unavailable');
+        }
         throw new GeminiError('Could not reach Gemini — check your internet connection.', 'network');
       }
       if (res.ok || !RETRYABLE_STATUSES.has(res.status) || attempt === MAX_ATTEMPTS) break;
-      await sleep(RETRY_DELAYS_MS[attempt - 1] ?? 1800);
+      await sleep(RETRY_DELAY_MS);
     }
 
     if (!res!.ok) {
@@ -92,7 +114,7 @@ export class GeminiService {
         throw new GeminiError('Gemini rate limit hit — wait a moment and try again.', 'rate-limit');
       }
       if (res!.status === 503 || res!.status === 500 || res!.status === 502 || res!.status === 504) {
-        throw new GeminiError("Gemini's servers are temporarily overloaded. Already retried a couple of times — wait a moment and try again.", 'unavailable');
+        throw new GeminiError("Gemini's servers are temporarily overloaded (this is Google's free-tier capacity, not a bug here). Already retried once — wait a moment and try again.", 'unavailable');
       }
       if (res!.status === 400) {
         throw new GeminiError('Gemini rejected the request — the API key may be malformed.', 'invalid-key');

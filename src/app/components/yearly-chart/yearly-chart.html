@@ -37,9 +37,13 @@
               ></rect>
             }
           }
-          <text class="year-label" [attr.x]="bar.labelX" [attr.y]="geometry().chartHeight + 11" text-anchor="middle">Yr {{ bar.year }}</text>
         }
       </svg>
+      <div class="year-label-row">
+        @for (bar of geometry().bars; track bar.year) {
+          <span class="year-label">Yr {{ bar.year }}</span>
+        }
+      </div>
     </div>
     <div class="chart-legend">
       @for (cat of categories; track cat.key) {

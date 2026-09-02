@@ -209,14 +209,14 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 
 .topbar {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 16px; padding: 14px 20px; margin-bottom: 22px;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  gap: 10px 16px; padding: 14px 20px; margin-bottom: 22px;
   animation: riseIn .6s cubic-bezier(.16,1,.3,1) both;
 }
-@media (max-width: 400px) { .topbar { padding: 12px 14px; margin-bottom: 16px; flex-wrap: wrap; } }
-.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+@media (max-width: 400px) { .topbar { padding: 12px 14px; margin-bottom: 16px; } }
+.brand { display: flex; align-items: center; gap: 12px; flex: 1 1 220px; min-width: 0; }
 .brand-text { min-width: 0; }
-.topbar-actions { display: flex; align-items: center; gap: 10px; flex: none; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
 
 .reset-btn {
   display: inline-flex; align-items: center; gap: 6px;
@@ -501,12 +501,13 @@ hr.divider { border: none; border-top: 1px solid var(--glass-border); margin: 18
 
 /* Yearly SVG bar chart */
 .year-chart-wrap { margin-top: 18px; }
-.year-chart-svg { width: 100%; height: 190px; display: block; overflow: visible; }
+.year-chart-svg { width: 100%; height: 176px; display: block; overflow: visible; }
 .grid-line { stroke: var(--glass-border); stroke-width: 0.5; stroke-dasharray: 2 2; }
 .grid-line.grid-baseline { stroke-dasharray: none; stroke-width: 0.75; opacity: .8; }
 .year-seg { cursor: pointer; transition: filter .15s ease; }
 .year-seg:hover, .year-seg:active, .year-seg:focus-visible { filter: brightness(1.15); outline: none; }
-.year-label { font-size: 5.5px; fill: var(--ink-muted); font-weight: 600; }
+.year-label-row { display: flex; margin-top: 8px; }
+.year-label { flex: 1; text-align: center; font-size: 0.66rem; color: var(--ink-muted); font-weight: 600; }
 
 .bar-v-wrap { display: flex; align-items: flex-end; gap: 10px; height: 170px; margin-top: 16px; padding-top: 6px; }
 .bar-v-col { flex: 1; display: flex; flex-direction: column; align-items: stretch; height: 100%; justify-content: flex-end; gap: 4px; }

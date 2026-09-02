@@ -46,7 +46,6 @@ const BAR_W = 12;
 const GAP = 8;
 const COL_W = BAR_W + GAP;
 const CHART_H = 100;
-const LABEL_H = 14;
 
 @Component({
   imports: [],
@@ -81,7 +80,7 @@ export class YearlyChart {
     });
     return {
       width: Math.max(COL_W, years.length * COL_W),
-      height: CHART_H + LABEL_H,
+      height: CHART_H,
       chartHeight: CHART_H,
       bars,
       gridLines: [0.25, 0.5, 0.75].map((f) => CHART_H * (1 - f)),
