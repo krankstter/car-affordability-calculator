@@ -2,6 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!--
+      GitHub Pages serves static files with no custom HTTP headers, so security policy has to be
+      delivered via meta tag here. That means frame-ancestors/sandbox/report-uri are parsed but not
+      enforced (spec restricts those to real headers) — clickjacking defense would need a proxy (e.g.
+      Cloudflare) in front that sets X-Frame-Options / a header-based CSP.
+      script-src / style-src-elem / script-src-attr below are placeholders: scripts/inject-csp-hashes.mjs
+      rewrites them after every build with hashes of whatever inline scripts, styles and event-handler
+      attributes Angular actually emitted (critical CSS, the hydration event contract, the deferred-CSS
+      onload swap, this file's JSON-LD block, etc). Don't hand-edit hashes here, they'd be overwritten.
+      style-src-attr stays 'unsafe-inline' though: the templates use plenty of literal style attributes
+      for one-off layout tweaks, and hashing every one isn't worth it, an attacker who can already
+      inject a style attribute has far less reach (no script execution) than one who can inject script.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; script-src 'self'; script-src-attr 'unsafe-hashes'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; style-src-elem 'self' https://fonts.googleapis.com; style-src-attr 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://generativelanguage.googleapis.com https://api.groq.com; manifest-src 'self'; worker-src 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>Car Affordability Calculator - EMI, Fuel, Insurance & Maintenance Cost Estimator</title>
     <meta
       name="description"
