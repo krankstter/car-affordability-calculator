@@ -13,7 +13,7 @@ const H = 32;
 @Component({
   imports: [],
   selector: 'app-garage-sparkline',
-  styleUrl: './garage-sparkline.css',
+  styleUrl: './garage-sparkline.scss',
   templateUrl: './garage-sparkline.html',
 })
 export class GarageSparkline {

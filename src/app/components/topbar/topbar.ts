@@ -6,7 +6,7 @@ import { GarageService } from '../../services/garage.service';
 @Component({
   imports: [],
   selector: 'app-topbar',
-  styleUrl: './topbar.css',
+  styleUrl: './topbar.scss',
   templateUrl: './topbar.html',
 })
 export class Topbar {

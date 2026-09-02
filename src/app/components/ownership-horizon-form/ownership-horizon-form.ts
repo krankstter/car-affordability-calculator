@@ -5,7 +5,7 @@ import { numFromEvent } from '../../shared/num-input';
 @Component({
   imports: [],
   selector: 'app-ownership-horizon-form',
-  styleUrl: './ownership-horizon-form.css',
+  styleUrl: './ownership-horizon-form.scss',
   templateUrl: './ownership-horizon-form.html',
 })
 export class OwnershipHorizonForm {

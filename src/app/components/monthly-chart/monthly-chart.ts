@@ -14,7 +14,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 @Component({
   imports: [],
   selector: 'app-monthly-chart',
-  styleUrl: './monthly-chart.css',
+  styleUrl: './monthly-chart.scss',
   templateUrl: './monthly-chart.html',
 })
 export class MonthlyChart {

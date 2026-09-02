@@ -4,7 +4,7 @@ import { InstallPromptService } from '../../services/install-prompt.service';
 @Component({
   imports: [],
   selector: 'app-install-banner',
-  styleUrl: './install-banner.css',
+  styleUrl: './install-banner.scss',
   templateUrl: './install-banner.html',
 })
 export class InstallBanner {

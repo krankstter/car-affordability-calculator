@@ -5,7 +5,7 @@ import { fmtINR } from '../../shared/format';
 @Component({
   imports: [],
   selector: 'app-loan-summary',
-  styleUrl: './loan-summary.css',
+  styleUrl: './loan-summary.scss',
   templateUrl: './loan-summary.html',
 })
 export class LoanSummary {

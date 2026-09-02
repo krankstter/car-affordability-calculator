@@ -7,7 +7,7 @@ import { PRICE_PRESETS } from '../../shared/price-presets';
 @Component({
   imports: [],
   selector: 'app-vehicle-loan-form',
-  styleUrl: './vehicle-loan-form.css',
+  styleUrl: './vehicle-loan-form.scss',
   templateUrl: './vehicle-loan-form.html',
 })
 export class VehicleLoanForm {

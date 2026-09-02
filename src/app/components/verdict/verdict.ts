@@ -8,7 +8,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 @Component({
   imports: [],
   selector: 'app-verdict',
-  styleUrl: './verdict.css',
+  styleUrl: './verdict.scss',
   templateUrl: './verdict.html',
 })
 export class Verdict {

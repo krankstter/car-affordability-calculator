@@ -10,7 +10,7 @@ const REMINDER_OPTIONS = [3, 7, 14, 30];
 @Component({
   imports: [GarageSparkline],
   selector: 'app-garage-drawer',
-  styleUrl: './garage-drawer.css',
+  styleUrl: './garage-drawer.scss',
   templateUrl: './garage-drawer.html',
 })
 export class GarageDrawer {

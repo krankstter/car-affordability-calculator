@@ -4,7 +4,7 @@ import { TooltipService } from '../../services/tooltip.service';
 @Component({
   imports: [],
   selector: 'app-tooltip',
-  styleUrl: './tooltip.css',
+  styleUrl: './tooltip.scss',
   templateUrl: './tooltip.html',
 })
 export class Tooltip {

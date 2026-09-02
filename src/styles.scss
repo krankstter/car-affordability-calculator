@@ -360,7 +360,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .range-value-wrap:hover { border-color: color-mix(in srgb, var(--accent) 45%, var(--glass-border)); }
 .range-value-wrap:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
 .range-value-input {
-  width: 3.4em; min-height: auto; text-align: right; background: transparent; border: none;
+  width: 4.4em; min-height: auto; text-align: right; background: transparent; border: none;
   font: inherit; color: inherit; font-variant-numeric: tabular-nums; padding: 0; outline: none;
 }
 .range-value-input:focus-visible { outline: none; }

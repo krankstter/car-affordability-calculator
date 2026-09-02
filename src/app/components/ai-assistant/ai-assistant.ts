@@ -21,7 +21,7 @@ function stripFences(s: string): string {
 @Component({
   imports: [],
   selector: 'app-ai-assistant',
-  styleUrl: './ai-assistant.css',
+  styleUrl: './ai-assistant.scss',
   templateUrl: './ai-assistant.html',
 })
 export class AiAssistant implements OnDestroy {

@@ -50,7 +50,7 @@ const CHART_H = 100;
 @Component({
   imports: [],
   selector: 'app-yearly-chart',
-  styleUrl: './yearly-chart.css',
+  styleUrl: './yearly-chart.scss',
   templateUrl: './yearly-chart.html',
 })
 export class YearlyChart {

@@ -4,7 +4,7 @@ import { CalculatorService } from '../../services/calculator.service';
 @Component({
   imports: [],
   selector: 'app-perspectives',
-  styleUrl: './perspectives.css',
+  styleUrl: './perspectives.scss',
   templateUrl: './perspectives.html',
 })
 export class Perspectives {

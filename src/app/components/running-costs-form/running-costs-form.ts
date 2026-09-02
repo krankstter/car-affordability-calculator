@@ -5,7 +5,7 @@ import { numFromEvent } from '../../shared/num-input';
 @Component({
   imports: [],
   selector: 'app-running-costs-form',
-  styleUrl: './running-costs-form.css',
+  styleUrl: './running-costs-form.scss',
   templateUrl: './running-costs-form.html',
 })
 export class RunningCostsForm {

@@ -5,7 +5,7 @@ import { fmtINR, fmtPct } from '../../shared/format';
 @Component({
   imports: [],
   selector: 'app-monthly-stats',
-  styleUrl: './monthly-stats.css',
+  styleUrl: './monthly-stats.scss',
   templateUrl: './monthly-stats.html',
 })
 export class MonthlyStats {

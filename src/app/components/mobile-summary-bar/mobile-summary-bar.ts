@@ -5,7 +5,7 @@ import { fmtINR } from '../../shared/format';
 @Component({
   imports: [],
   selector: 'app-mobile-summary-bar',
-  styleUrl: './mobile-summary-bar.css',
+  styleUrl: './mobile-summary-bar.scss',
   templateUrl: './mobile-summary-bar.html',
 })
 export class MobileSummaryBar {

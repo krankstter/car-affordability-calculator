@@ -15,7 +15,7 @@ const STEPS: Step[] = [
 @Component({
   imports: [],
   selector: 'app-step-rail',
-  styleUrl: './step-rail.css',
+  styleUrl: './step-rail.scss',
   templateUrl: './step-rail.html',
 })
 export class StepRail implements OnDestroy {
