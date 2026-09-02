@@ -14,6 +14,13 @@
     </div>
   </div>
   <div class="topbar-actions">
+    <button class="reset-btn" type="button" aria-label="Open my garage" (click)="garage.open.set(true)">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 16.5 5.4 11a2 2 0 0 1 1.9-1.4h9.4A2 2 0 0 1 18.6 11l1.4 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="16" width="18" height="4.2" rx="1.6" stroke="currentColor" stroke-width="1.8"/></svg>
+      <span>Garage</span>
+      @if (garage.goals().length > 0) {
+        <span class="garage-badge">{{ garage.goals().length }}</span>
+      }
+    </button>
     <button class="reset-btn" type="button" aria-label="Reset all values to defaults" (click)="onReset()">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M20 4v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       <span>Reset</span>

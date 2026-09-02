@@ -9,6 +9,11 @@
       <input type="number" id="onRoadPrice" min="50000" step="5000" [value]="calc.onRoadPrice()" (input)="calc.onRoadPrice.set(numFromEvent($event))" />
     </div>
     <p class="field-caption">The final, all-in price your dealer quoted: ex-showroom + RTO road tax + insurance + accessories.</p>
+    <div class="preset-chips" role="group" aria-label="Quick-start price presets">
+      @for (p of presets; track p.value) {
+        <button type="button" class="suggest-btn preset-chip" (click)="calc.onRoadPrice.set(p.value)">{{ p.label }}</button>
+      }
+    </div>
   </div>
 
   <div class="readout-row">

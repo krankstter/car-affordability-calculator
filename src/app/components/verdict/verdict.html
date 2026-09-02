@@ -50,4 +50,9 @@
     <div class="check-chip" [attr.data-pass]="calc.totalCostPass()"><span class="dot" aria-hidden="true"></span><span>Total car cost ≤ 10% of income</span></div>
   </div>
   <p class="field-caption" style="margin-top:12px">This verdict blends the 20/4/10 guideline with typical bank debt-to-income limits. It's one popular view, not an absolute; see other takes below.</p>
+
+  <button type="button" class="suggest-btn" style="margin-top:10px" (click)="shareResult()">Share result</button>
+  @if (shareMessage(); as msg) {
+    <p class="copy-confirm">{{ msg }}</p>
+  }
 </div>

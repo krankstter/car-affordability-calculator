@@ -1,0 +1,10 @@
+<span class="spark-wrap">
+  @if (geometry(); as g) {
+    <svg [attr.viewBox]="'0 0 ' + g.w + ' ' + g.h" class="spark-svg" role="img" [attr.aria-label]="trendLabel()">
+      <polyline [attr.points]="g.points" fill="none" stroke="var(--series-score)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <span class="spark-label">{{ trendLabel() }}</span>
+  } @else {
+    <span class="spark-empty">Not enough history yet — check back tomorrow.</span>
+  }
+</span>

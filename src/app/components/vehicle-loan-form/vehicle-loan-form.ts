@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { CalculatorService } from '../../services/calculator.service';
 import { numFromEvent } from '../../shared/num-input';
 import { fmtINR } from '../../shared/format';
+import { PRICE_PRESETS } from '../../shared/price-presets';
 
 @Component({
   imports: [],
@@ -13,6 +14,7 @@ export class VehicleLoanForm {
   protected readonly calc = inject(CalculatorService);
   protected readonly numFromEvent = numFromEvent;
   protected readonly fmtINR = fmtINR;
+  protected readonly presets = PRICE_PRESETS;
 
   protected readonly downFillPct = computed(() => (this.calc.downPaymentPct() / 60) * 100);
 

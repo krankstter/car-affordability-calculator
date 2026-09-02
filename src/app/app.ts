@@ -14,6 +14,8 @@ import { Tooltip } from './components/tooltip/tooltip';
 import { StepRail } from './components/step-rail/step-rail';
 import { MobileSummaryBar } from './components/mobile-summary-bar/mobile-summary-bar';
 import { AiAssistant } from './components/ai-assistant/ai-assistant';
+import { GarageDrawer } from './components/garage-drawer/garage-drawer';
+import { InstallBanner } from './components/install-banner/install-banner';
 
 @Component({
   imports: [
@@ -32,6 +34,8 @@ import { AiAssistant } from './components/ai-assistant/ai-assistant';
     LoanSummary,
     Tooltip,
     MobileSummaryBar,
+    GarageDrawer,
+    InstallBanner,
   ],
   selector: 'app-root',
   styleUrl: './app.css',

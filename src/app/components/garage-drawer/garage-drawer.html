@@ -1,0 +1,96 @@
+@if (garage.open()) {
+  <div class="garage-backdrop" (click)="close()"></div>
+  <aside class="garage-panel glass" role="dialog" aria-label="My Garage">
+    <div class="garage-header">
+      <h2 class="card-title" style="margin-bottom:0">My Garage</h2>
+      <button type="button" class="install-dismiss" aria-label="Close garage" (click)="close()">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="field" style="margin-top:6px">
+      <div class="field-label"><label for="newGoalName">Save current scenario</label></div>
+      <div class="input-shell">
+        <input
+          type="text"
+          id="newGoalName"
+          placeholder="e.g. Creta base"
+          [value]="newGoalName()"
+          (input)="newGoalName.set($any($event.target).value)"
+          (keydown.enter)="saveCurrent()"
+        />
+      </div>
+    </div>
+    <button type="button" class="suggest-btn" style="margin-top:6px" (click)="saveCurrent()">Save to garage</button>
+
+    @if (garage.goals().length === 0) {
+      <p class="field-caption" style="margin-top:16px">No saved goals yet. Configure a car above, then save it here to track it over time.</p>
+    } @else {
+      <div class="goal-list">
+        @for (goal of garage.goals(); track goal.id) {
+          <div class="goal-card glass" [attr.data-active]="goal.id === garage.activeGoalId()">
+            @if (editingId() === goal.id) {
+              <div class="input-shell" style="margin-bottom:8px">
+                <input type="text" [value]="editingName()" (input)="editingName.set($any($event.target).value)" (keydown.enter)="confirmRename(goal.id)" />
+              </div>
+              <div class="goal-actions">
+                <button type="button" class="suggest-btn" (click)="confirmRename(goal.id)">Save name</button>
+                <button type="button" class="suggest-btn" (click)="cancelRename()">Cancel</button>
+              </div>
+            } @else {
+              <div class="goal-name-row">
+                <span class="goal-name">{{ goal.name }}</span>
+                @if (goal.id === garage.activeGoalId()) {
+                  <span class="goal-active-badge">Active</span>
+                }
+              </div>
+
+              @if (latestOf(goal); as last) {
+                <div class="goal-readout" [attr.data-level]="last.verdictLevel">
+                  <span class="goal-score">{{ last.affordabilityScore }}/100</span>
+                  <span class="goal-verdict">{{ verdictTitleFor(last.verdictLevel) }}</span>
+                </div>
+              }
+
+              <app-garage-sparkline [history]="goal.history" />
+
+              <div class="goal-actions">
+                <button type="button" class="suggest-btn" (click)="load(goal.id)">Load</button>
+                @if (goal.id === garage.activeGoalId()) {
+                  <button type="button" class="suggest-btn" (click)="updateSnapshot(goal.id)">Save changes</button>
+                }
+                <button type="button" class="suggest-btn" (click)="startRename(goal)">Rename</button>
+                <button type="button" class="suggest-btn" (click)="share(goal)">Share</button>
+                <button type="button" class="suggest-btn goal-delete" (click)="remove(goal.id)">Delete</button>
+              </div>
+              @if (shareGoalId() === goal.id && shareOutcome()) {
+                <p class="copy-confirm">{{ shareMessage() }}</p>
+              }
+
+              <div class="goal-reminder">
+                @if (reminders.permission() !== 'granted') {
+                  <button type="button" class="suggest-btn" (click)="enableNotifications()">Enable notifications to set a reminder</button>
+                } @else if (goal.reminder && !goal.reminder.fired) {
+                  <span class="reminder-status">
+                    Reminder set for {{ goal.reminder.forDate }}
+                    <button type="button" class="reminder-clear" (click)="clearReminder(goal.id)">Cancel</button>
+                  </span>
+                } @else {
+                  <div class="reminder-chips">
+                    <span class="reminder-label">Remind me in</span>
+                    @for (d of reminderOptions; track d) {
+                      <button type="button" class="suggest-btn" (click)="setReminder(goal.id, d)">{{ d }}d</button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+      <p class="field-caption garage-reminder-note">
+        Reminders only notify you when you reopen this app after the date — there's no background push server, so delivery isn't guaranteed.
+      </p>
+    }
+  </aside>
+}

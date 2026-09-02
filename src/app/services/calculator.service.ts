@@ -138,14 +138,7 @@ export class CalculatorService {
     return 'critical';
   });
 
-  readonly verdictTitle = computed(() => {
-    switch (this.verdictLevel()) {
-      case 'no-income': return 'Enter your income';
-      case 'good': return 'Comfortably affordable';
-      case 'warning': return 'A bit of a stretch';
-      default: return 'Not recommended';
-    }
-  });
+  readonly verdictTitle = computed(() => verdictTitleFor(this.verdictLevel()));
 
   readonly verdictSub = computed(() => {
     switch (this.verdictLevel()) {
@@ -383,6 +376,15 @@ export class CalculatorService {
     } catch {
       /* corrupt/unavailable storage — fall back to defaults, non-fatal */
     }
+  }
+}
+
+export function verdictTitleFor(level: StatusLevel | 'no-income'): string {
+  switch (level) {
+    case 'no-income': return 'Enter your income';
+    case 'good': return 'Comfortably affordable';
+    case 'warning': return 'A bit of a stretch';
+    default: return 'Not recommended';
   }
 }
 
