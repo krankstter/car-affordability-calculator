@@ -24,7 +24,10 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build
+      # This repo deploys to a project subpath (https://krankstter.github.io/car-affordability-calculator/),
+      # not the root domain, so the base href must be overridden here only — the default
+      # `npm run build` (base href "/") is still what Capacitor/local dev use.
+      - run: npx ng build --base-href /car-affordability-calculator/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/car-affordability-calculator/browser
