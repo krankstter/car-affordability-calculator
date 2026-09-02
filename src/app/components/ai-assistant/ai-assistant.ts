@@ -34,6 +34,7 @@ export class AiAssistant implements OnDestroy {
   protected readonly keyPagePending = signal(false);
   protected readonly clipboardNote = signal('');
   private browserFinishedListener: { remove: () => void } | null = null;
+  private popupPollTimer: number | null = null;
 
   protected readonly activeTab = signal<Tab>('explain');
 
@@ -88,9 +89,11 @@ export class AiAssistant implements OnDestroy {
       return;
     }
 
-    const poll = window.setInterval(() => {
+    if (this.popupPollTimer) window.clearInterval(this.popupPollTimer);
+    this.popupPollTimer = window.setInterval(() => {
       if (popup.closed) {
-        window.clearInterval(poll);
+        window.clearInterval(this.popupPollTimer!);
+        this.popupPollTimer = null;
         this.keyPagePending.set(false);
         void this.pasteFromClipboard(true);
       }
@@ -234,5 +237,6 @@ export class AiAssistant implements OnDestroy {
 
   ngOnDestroy(): void {
     this.browserFinishedListener?.remove();
+    if (this.popupPollTimer) window.clearInterval(this.popupPollTimer);
   }
 }

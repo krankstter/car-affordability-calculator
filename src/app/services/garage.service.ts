@@ -80,6 +80,7 @@ export class GarageService {
   readonly activeGoal = computed(() => this.goals().find((g) => g.id === this.activeGoalId()) ?? null);
 
   private readonly restored = signal(false);
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.restore();
@@ -112,11 +113,14 @@ export class GarageService {
     effect(() => {
       const state = { goals: this.goals(), activeGoalId: this.activeGoalId() };
       if (!this.restored()) return;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch {
-        /* localStorage unavailable — non-fatal */
-      }
+      if (this.persistTimer) clearTimeout(this.persistTimer);
+      this.persistTimer = setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {
+          /* localStorage unavailable — non-fatal */
+        }
+      }, 300);
     });
   }
 

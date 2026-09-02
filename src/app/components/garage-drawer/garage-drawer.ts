@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { CalculatorService, verdictTitleFor } from '../../services/calculator.service';
 import { Goal, GarageService } from '../../services/garage.service';
 import { ReminderService } from '../../services/reminder.service';
@@ -13,7 +13,7 @@ const REMINDER_OPTIONS = [3, 7, 14, 30];
   styleUrl: './garage-drawer.scss',
   templateUrl: './garage-drawer.html',
 })
-export class GarageDrawer {
+export class GarageDrawer implements OnDestroy {
   protected readonly garage = inject(GarageService);
   protected readonly calc = inject(CalculatorService);
   protected readonly reminders = inject(ReminderService);
@@ -109,5 +109,9 @@ export class GarageDrawer {
 
   latestOf(goal: Goal) {
     return goal.history[goal.history.length - 1] ?? null;
+  }
+
+  ngOnDestroy(): void {
+    if (this.shareTimer) clearTimeout(this.shareTimer);
   }
 }

@@ -101,6 +101,7 @@ export class CalculatorService {
   readonly depreciationRatePct = signal(DEFAULTS.depreciationRatePct);
 
   private readonly restored = signal(false);
+  private persistTimer: ReturnType<typeof setTimeout> | null = null;
 
   // ---- Derived (computed signals) ----
   readonly downAmt = computed(() => (this.onRoadPrice() * this.downPaymentPct()) / 100);
@@ -287,11 +288,16 @@ export class CalculatorService {
         depreciationRatePct: this.depreciationRatePct(),
       };
       if (!this.restored()) return;
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-      } catch {
-        /* localStorage unavailable (private mode, etc.) — non-fatal */
-      }
+      // Debounce: a slider drag fires this effect dozens of times a second;
+      // coalesce into one write shortly after input settles.
+      if (this.persistTimer) clearTimeout(this.persistTimer);
+      this.persistTimer = setTimeout(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {
+          /* localStorage unavailable (private mode, etc.) — non-fatal */
+        }
+      }, 300);
     });
   }
 

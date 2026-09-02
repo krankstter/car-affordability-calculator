@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { CalculatorService } from '../../services/calculator.service';
 import { ShareOutcome, ShareService } from '../../services/share.service';
 
@@ -11,7 +11,7 @@ const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
   styleUrl: './verdict.scss',
   templateUrl: './verdict.html',
 })
-export class Verdict {
+export class Verdict implements OnDestroy {
   protected readonly calc = inject(CalculatorService);
   private readonly shareService = inject(ShareService);
   protected readonly circumference = RING_CIRCUMFERENCE;
@@ -44,5 +44,9 @@ export class Verdict {
     this.shareOutcome.set(outcome);
     if (this.shareOutcomeTimer) clearTimeout(this.shareOutcomeTimer);
     this.shareOutcomeTimer = setTimeout(() => this.shareOutcome.set(null), 3000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.shareOutcomeTimer) clearTimeout(this.shareOutcomeTimer);
   }
 }
